@@ -1,13 +1,6 @@
-from database import engine, Base
-from models import User
-
-Base.metadata.create_all(bind=engine)
-from database import init_db
-init_db()
 import streamlit as st
 import base64
 
-from auth import register_user, login_user
 from quiz_bank import QUIZ_BANK
 from certificate import generar_certificado
 
@@ -23,7 +16,17 @@ st.set_page_config(
 
 
 # =========================
-# FONDO + ESTILO CRISTAL LIMPIO
+# USUARIOS (SIMULADO)
+# =========================
+if "users" not in st.session_state:
+    st.session_state["users"] = {}
+
+if "user" not in st.session_state:
+    st.session_state["user"] = None
+
+
+# =========================
+# FONDO + ESTILO CRISTAL
 # =========================
 def set_bg(image_file):
     with open(image_file, "rb") as f:
@@ -31,8 +34,6 @@ def set_bg(image_file):
 
     st.markdown(f"""
     <style>
-
-    /* FONDO PRINCIPAL */
     .stApp {{
         background-image: url("data:image/jpg;base64,{encoded}");
         background-size: cover;
@@ -41,66 +42,80 @@ def set_bg(image_file):
         background-attachment: fixed;
     }}
 
-    /* 🧊 CRISTAL LIMPIO (SIN BLUR) */
     .block-container {{
         padding: 2rem;
         max-width: 900px;
-
-        background: rgba(255, 255, 255, 0.10); /* transparente */
+        background: rgba(255, 255, 255, 0.10);
         border-radius: 22px;
         border: 1px solid rgba(255, 255, 255, 0.40);
-
         box-shadow: 0 10px 35px rgba(0, 0, 0, 0.30);
     }}
 
-    /* TEXTO LEGIBLE */
     p, label, h1, h2, h3, div {{
         color: white !important;
         text-shadow: 0px 2px 8px rgba(0,0,0,0.75);
     }}
 
-    /* BOTONES */
     button {{
         width: 100%;
         border-radius: 14px;
         font-size: 16px;
         padding: 0.75rem;
-
         background: rgba(255, 255, 255, 0.12);
         border: 1px solid rgba(255, 255, 255, 0.25);
         color: white;
-
-        transition: 0.25s ease-in-out;
     }}
 
     button:hover {{
         background: rgba(255, 255, 255, 0.22);
-        transform: scale(1.02);
     }}
-
-    /* RADIO */
-    .stRadio > div {{
-        gap: 12px;
-    }}
-
     </style>
     """, unsafe_allow_html=True)
 
 
-# ACTIVAR FONDO
 set_bg("fondo.jpg")
 
 
-st.title("🎓 SkillForge Academy")
+# =========================
+# LOGIN / REGISTER
+# =========================
+def auth_page():
+
+    st.title("🎓 SkillForge Academy")
+
+    menu = st.radio("Acceso", ["Iniciar sesión", "Registrarme"])
+
+    if menu == "Registrarme":
+
+        new_user = st.text_input("Usuario")
+        new_pass = st.text_input("Contraseña", type="password")
+
+        if st.button("Crear cuenta"):
+
+            if new_user in st.session_state["users"]:
+                st.error("Ese usuario ya existe")
+            else:
+                st.session_state["users"][new_user] = new_pass
+                st.success("Cuenta creada, ahora inicia sesión")
+
+    else:
+
+        user = st.text_input("Usuario")
+        password = st.text_input("Contraseña", type="password")
+
+        if st.button("Entrar"):
+
+            if user in st.session_state["users"] and st.session_state["users"][user] == password:
+                st.session_state["user"] = user
+                st.success("Bienvenido " + user)
+                st.rerun()
+            else:
+                st.error("Usuario o contraseña incorrectos")
 
 
 # =========================
 # SESSION STATE
 # =========================
-if "user" not in st.session_state:
-    st.session_state["user"] = None
-    st.session_state["name"] = None
-
 if "nivel" not in st.session_state:
     st.session_state["nivel"] = 1
 
@@ -109,53 +124,18 @@ if "video_completado" not in st.session_state:
 
 
 # =========================
-# LOGIN / REGISTRO
-# =========================
-def auth_page():
-
-    st.subheader("🔐 Acceso")
-
-    tab1, tab2 = st.tabs(["Login", "Registro"])
-
-    with tab1:
-        email = st.text_input("Correo", key="login_email")
-        password = st.text_input("Contraseña", type="password", key="login_pass")
-
-        if st.button("Entrar", use_container_width=True):
-            user = login_user(email, password)
-
-            if user:
-                st.session_state["user"] = user.email
-                st.session_state["name"] = user.name
-                st.rerun()
-            else:
-                st.error("Credenciales incorrectas")
-
-    with tab2:
-        name = st.text_input("Nombre", key="reg_name")
-        email2 = st.text_input("Correo", key="reg_email")
-        password2 = st.text_input("Contraseña", key="reg_pass")
-
-        if st.button("Registrarme", use_container_width=True):
-            ok, msg = register_user(name, email2, password2)
-
-            if ok:
-                st.success(msg)
-            else:
-                st.error(msg)
-
-
-# =========================
 # CURSO
 # =========================
 def curso_page():
 
-    user = st.session_state["name"]
+    user = st.session_state["user"]
+
+    st.title(f"🎓 SkillForge Academy - {user}")
+
     nivel = st.session_state["nivel"]
 
-    st.success(f"Bienvenido {user} 🎓")
+    st.markdown("### 📚 Curso en progreso")
     st.markdown("---")
-
 
     if nivel == 1:
         st.subheader("📺 Módulo 1")
@@ -175,20 +155,18 @@ def curso_page():
 
 
     if not st.session_state["video_completado"]:
-        if st.button("✔ Marcar video como visto", use_container_width=True):
+        if st.button("✔ Marcar video como visto"):
             st.session_state["video_completado"] = True
             st.success("Video completado")
 
     st.markdown("---")
 
-
     if not st.session_state["video_completado"]:
         st.warning("⚠️ Debes ver el video antes del examen")
 
     else:
-        if st.button("📥 Iniciar examen", use_container_width=True):
+        if st.button("📥 Iniciar examen"):
             st.session_state["quiz"] = QUIZ_BANK[nivel]
-
 
     if "quiz" in st.session_state:
 
@@ -204,7 +182,7 @@ def curso_page():
 
             respuestas.append(r)
 
-        if st.button("Calificar", use_container_width=True):
+        if st.button("Calificar"):
 
             correctas = 0
 
@@ -224,7 +202,7 @@ def curso_page():
 
             if st.session_state["nivel"] == 1:
 
-                if st.button("➡️ Ir al Módulo 2", use_container_width=True):
+                if st.button("➡️ Ir al Módulo 2"):
                     st.session_state["nivel"] = 2
                     st.session_state["video_completado"] = False
                     st.session_state.pop("quiz", None)
@@ -233,7 +211,7 @@ def curso_page():
 
             elif st.session_state["nivel"] == 2:
 
-                if st.button("➡️ Ir al Módulo 3", use_container_width=True):
+                if st.button("➡️ Ir al Módulo 3"):
                     st.session_state["nivel"] = 3
                     st.session_state["video_completado"] = False
                     st.session_state.pop("quiz", None)
@@ -242,14 +220,17 @@ def curso_page():
 
             else:
 
-                if st.button("🎓 Finalizar curso", use_container_width=True):
+                st.markdown("---")
+                st.subheader("🎓 Final del curso")
+
+                if st.button("🎓 Finalizar y generar certificado"):
 
                     st.balloons()
                     st.success("Curso completado")
 
                     cert = generar_certificado(
                         user,
-                        "MOUSSE DE OREO",
+                        "SKILLFORGE ACADEMY",
                         st.session_state["score"]
                     )
 
@@ -258,18 +239,18 @@ def curso_page():
                             "📥 Descargar certificado",
                             f,
                             file_name="certificado.pdf",
-                            mime="application/pdf",
-                            use_container_width=True
+                            mime="application/pdf"
                         )
+
 
         else:
             st.error("❌ Necesitas mínimo 80%")
 
 
 # =========================
-# ROUTER
+# FLUJO PRINCIPAL
 # =========================
-if st.session_state["user"]:
-    curso_page()
-else:
+if st.session_state["user"] is None:
     auth_page()
+else:
+    curso_page()
