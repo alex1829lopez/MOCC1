@@ -2,9 +2,8 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# SIEMPRE escribible en Streamlit (incluye móvil)
-DB_PATH = os.path.join("/tmp", "academy.db")
-
+# 📌 DB en Streamlit (escribible)
+DB_PATH = "/tmp/academy.db"
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 
 engine = create_engine(
@@ -12,10 +11,20 @@ engine = create_engine(
     connect_args={"check_same_thread": False}
 )
 
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
+)
+
 Base = declarative_base()
+
+
+# 🔥 IMPORTANTE: importar modelos para que SQLAlchemy los vea
+from models import User  # 👈 CLAVE
 
 def init_db():
     Base.metadata.create_all(bind=engine)
 
+# 🔥 crear tablas al iniciar
 init_db()

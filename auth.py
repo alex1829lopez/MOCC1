@@ -10,51 +10,51 @@ def register_user(name, email, password):
 
     db = SessionLocal()
 
-    try:
-        user_exists = db.query(User).filter(User.email == email).first()
+        try:
+                user_exists = db.query(User).filter(User.email == email).first()
 
-        if user_exists:
-            return False, "El usuario ya existe"
+                        if user_exists:
+                                    return False, "El usuario ya existe"
 
-        hashed_password = generate_password_hash(password)
+                                            hashed_password = generate_password_hash(password)
 
-        new_user = User(
-            name=name,
-            email=email,
-            password=hashed_password
-        )
+                                                    new_user = User(
+                                                                name=name,
+                                                                            email=email,
+                                                                                        password=hashed_password
+                                                                                                )
 
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
+                                                                                                        db.add(new_user)
+                                                                                                                db.commit()
+                                                                                                                        db.refresh(new_user)
 
-        return True, "Usuario registrado correctamente"
+                                                                                                                                return True, "Usuario registrado correctamente"
 
-    except Exception as e:
-        db.rollback()
-        return False, str(e)
+                                                                                                                                    except Exception as e:
+                                                                                                                                            db.rollback()
+                                                                                                                                                    return False, str(e)
 
-    finally:
-        db.close()
+                                                                                                                                                        finally:
+                                                                                                                                                                db.close()
 
 
-# =========================
-# LOGIN
-# =========================
-def login_user(email, password):
+                                                                                                                                                                # =========================
+                                                                                                                                                                # LOGIN
+                                                                                                                                                                # =========================
+                                                                                                                                                                def login_user(email, password):
 
-    db = SessionLocal()
+                                                                                                                                                                    db = SessionLocal()
 
-    try:
-        user = db.query(User).filter(User.email == email).first()
+                                                                                                                                                                        try:
+                                                                                                                                                                                user = db.query(User).filter(User.email == email).first()
 
-        if not user:
-            return None
+                                                                                                                                                                                        if not user:
+                                                                                                                                                                                                    return None
 
-        if check_password_hash(user.password, password):
-            return user
+                                                                                                                                                                                                            if check_password_hash(user.password, password):
+                                                                                                                                                                                                                        return user
 
-        return None
+                                                                                                                                                                                                                                return None
 
-    finally:
-        db.close()
+                                                                                                                                                                                                                                    finally:
+                                                                                                                                                                                                                                            db.close()
