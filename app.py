@@ -26,6 +26,29 @@ if "user" not in st.session_state:
 
 
 # =========================
+# DATOS DEL USUARIO CURSO
+# =========================
+if "nombre" not in st.session_state:
+    st.session_state["nombre"] = ""
+
+if "apellidos" not in st.session_state:
+    st.session_state["apellidos"] = ""
+
+if "datos_completos" not in st.session_state:
+    st.session_state["datos_completos"] = False
+
+
+# =========================
+# PROGRESO CURSO
+# =========================
+if "nivel" not in st.session_state:
+    st.session_state["nivel"] = 1
+
+if "video_completado" not in st.session_state:
+    st.session_state["video_completado"] = False
+
+
+# =========================
 # FONDO + ESTILO CRISTAL
 # =========================
 def set_bg(image_file):
@@ -77,7 +100,7 @@ set_bg("fondo.jpg")
 
 
 # =========================
-# LOGIN / REGISTER
+# AUTH
 # =========================
 def auth_page():
 
@@ -96,7 +119,7 @@ def auth_page():
                 st.error("Ese usuario ya existe")
             else:
                 st.session_state["users"][new_user] = new_pass
-                st.success("Cuenta creada, ahora inicia sesión")
+                st.success("Cuenta creada")
 
     else:
 
@@ -114,22 +137,45 @@ def auth_page():
 
 
 # =========================
-# SESSION STATE
-# =========================
-if "nivel" not in st.session_state:
-    st.session_state["nivel"] = 1
-
-if "video_completado" not in st.session_state:
-    st.session_state["video_completado"] = False
-
-
-# =========================
 # CURSO
 # =========================
 def curso_page():
 
     user = st.session_state["user"]
 
+    # =========================
+    # BLOQUE OBLIGATORIO: NOMBRE Y APELLIDOS
+    # =========================
+    if not st.session_state["datos_completos"]:
+
+        st.title("🎓 Datos del estudiante")
+
+        nombre = st.text_input("Nombre")
+        apellidos = st.text_input("Apellidos")
+
+        if st.button("Continuar al curso"):
+
+            if nombre.strip() == "" or apellidos.strip() == "":
+                st.error("Debes completar ambos campos")
+            else:
+                st.session_state["nombre"] = nombre
+                st.session_state["apellidos"] = apellidos
+                st.session_state["datos_completos"] = True
+
+                # RESET TOTAL DEL CURSO (IMPORTANTE)
+                st.session_state["nivel"] = 1
+                st.session_state["video_completado"] = False
+                st.session_state.pop("quiz", None)
+                st.session_state.pop("score", None)
+
+                st.rerun()
+
+        return
+
+
+    # =========================
+    # CURSO PRINCIPAL
+    # =========================
     st.title(f"🎓 SkillForge Academy - {user}")
 
     nivel = st.session_state["nivel"]
@@ -154,6 +200,9 @@ def curso_page():
         return
 
 
+    # =========================
+    # VIDEO COMPLETADO
+    # =========================
     if not st.session_state["video_completado"]:
         if st.button("✔ Marcar video como visto"):
             st.session_state["video_completado"] = True
@@ -168,6 +217,10 @@ def curso_page():
         if st.button("📥 Iniciar examen"):
             st.session_state["quiz"] = QUIZ_BANK[nivel]
 
+
+    # =========================
+    # QUIZ
+    # =========================
     if "quiz" in st.session_state:
 
         respuestas = []
@@ -196,6 +249,9 @@ def curso_page():
             st.success(f"Resultado: {score:.0f}%")
 
 
+    # =========================
+    # AVANCE DE NIVEL / CERTIFICADO
+    # =========================
     if "score" in st.session_state:
 
         if st.session_state["score"] >= 80:
@@ -228,8 +284,10 @@ def curso_page():
                     st.balloons()
                     st.success("Curso completado")
 
+                    nombre_completo = st.session_state["nombre"] + " " + st.session_state["apellidos"]
+
                     cert = generar_certificado(
-                        user,
+                        nombre_completo,
                         "SKILLFORGE ACADEMY",
                         st.session_state["score"]
                     )
@@ -241,7 +299,6 @@ def curso_page():
                             file_name="certificado.pdf",
                             mime="application/pdf"
                         )
-
 
         else:
             st.error("❌ Necesitas mínimo 80%")
