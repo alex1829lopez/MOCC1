@@ -1,32 +1,11 @@
-from sqlalchemy import Column
-from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import Float
-
 from database import Base
+from sqlalchemy import Column, Integer, String
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True)
-
+    id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
-    email = Column(String, unique=True)
-
+    email = Column(String, unique=True, index=True)
     password = Column(String)
-
-
-class Certificate(Base):
-    __tablename__ = "certificates"
-
-    id = Column(Integer, primary_key=True)
-
-    user_email = Column(String)
-
-    course_name = Column(String)
-
-    score = Column(Float)
-
-    folio = Column(String)
-    

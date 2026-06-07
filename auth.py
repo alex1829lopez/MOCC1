@@ -1,77 +1,60 @@
-import bcrypt
 from database import SessionLocal
 from models import User
-
-
-def hash_password(password):
-    return bcrypt.hashpw(
-        password.encode(),
-        bcrypt.gensalt()
-    ).decode()
-
-
-def verify_password(password, hashed):
-    return bcrypt.checkpw(
-        password.encode(),
-        hashed.encode()
-    )
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 # =========================
-# REGISTRO (FIXED)
+# REGISTRO
 # =========================
 def register_user(name, email, password):
 
     db = SessionLocal()
 
     try:
-        existing = db.query(User).filter(
-            User.email == email
-        ).first()
+        user_exists = db.query(User).filter(User.email == email).first()
 
-        if existing:
-            return False, "❌ El correo ya está registrado"
+        if user_exists:
+            return False, "El usuario ya existe"
 
-        user = User(
+        hashed_password = generate_password_hash(password)
+
+        new_user = User(
             name=name,
             email=email,
-            password=hash_password(password)
+            password=hashed_password
         )
 
-        db.add(user)
+        db.add(new_user)
         db.commit()
-        db.close()
+        db.refresh(new_user)
 
-        return True, "✅ Usuario creado correctamente"
+        return True, "Usuario registrado correctamente"
 
     except Exception as e:
         db.rollback()
+        return False, str(e)
+
+    finally:
         db.close()
-        return False, f"Error: {str(e)}"
 
 
 # =========================
-# LOGIN (FIXED)
+# LOGIN
 # =========================
 def login_user(email, password):
 
     db = SessionLocal()
 
     try:
-        user = db.query(User).filter(
-            User.email == email
-        ).first()
-
-        db.close()
+        user = db.query(User).filter(User.email == email).first()
 
         if not user:
             return None
 
-        if verify_password(password, user.password):
+        if check_password_hash(user.password, password):
             return user
 
         return None
 
-    except Exception:
+    finally:
         db.close()
-        return None
