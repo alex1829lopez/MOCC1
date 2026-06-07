@@ -16,17 +16,7 @@ st.set_page_config(
 
 
 # =========================
-# USUARIOS (SIMULADO)
-# =========================
-if "users" not in st.session_state:
-    st.session_state["users"] = {}
-
-if "user" not in st.session_state:
-    st.session_state["user"] = None
-
-
-# =========================
-# DATOS DEL USUARIO CURSO
+# DATOS DEL USUARIO
 # =========================
 if "nombre" not in st.session_state:
     st.session_state["nombre"] = ""
@@ -100,69 +90,30 @@ set_bg("fondo.jpg")
 
 
 # =========================
-# AUTH
-# =========================
-def auth_page():
-
-    st.title("🎓 SkillForge Academy")
-
-    menu = st.radio("Acceso", ["Iniciar sesión", "Registrarme"])
-
-    if menu == "Registrarme":
-
-        new_user = st.text_input("Usuario")
-        new_pass = st.text_input("Contraseña", type="password")
-
-        if st.button("Crear cuenta"):
-
-            if new_user in st.session_state["users"]:
-                st.error("Ese usuario ya existe")
-            else:
-                st.session_state["users"][new_user] = new_pass
-                st.success("Cuenta creada")
-
-    else:
-
-        user = st.text_input("Usuario")
-        password = st.text_input("Contraseña", type="password")
-
-        if st.button("Entrar"):
-
-            if user in st.session_state["users"] and st.session_state["users"][user] == password:
-                st.session_state["user"] = user
-                st.success("Bienvenido " + user)
-                st.rerun()
-            else:
-                st.error("Usuario o contraseña incorrectos")
-
-
-# =========================
 # CURSO
 # =========================
 def curso_page():
 
-    user = st.session_state["user"]
-
     # =========================
-    # BLOQUE OBLIGATORIO: NOMBRE Y APELLIDOS
+    # PEDIR NOMBRE Y APELLIDOS
     # =========================
     if not st.session_state["datos_completos"]:
 
-        st.title("🎓 Datos del estudiante")
+        st.title("🎓 Antes de iniciar el curso")
 
         nombre = st.text_input("Nombre")
         apellidos = st.text_input("Apellidos")
 
-        if st.button("Continuar al curso"):
+        if st.button("Continuar"):
 
             if nombre.strip() == "" or apellidos.strip() == "":
-                st.error("Debes completar ambos campos")
+                st.error("Debes completar nombre y apellidos")
             else:
                 st.session_state["nombre"] = nombre
                 st.session_state["apellidos"] = apellidos
                 st.session_state["datos_completos"] = True
 
-                # RESET TOTAL DEL CURSO (IMPORTANTE)
+                # RESET CURSO
                 st.session_state["nivel"] = 1
                 st.session_state["video_completado"] = False
                 st.session_state.pop("quiz", None)
@@ -176,7 +127,9 @@ def curso_page():
     # =========================
     # CURSO PRINCIPAL
     # =========================
-    st.title(f"🎓 SkillForge Academy - {user}")
+    nombre = st.session_state["nombre"]
+
+    st.title(f"🎓 SkillForge Academy - {nombre}")
 
     nivel = st.session_state["nivel"]
 
@@ -250,7 +203,7 @@ def curso_page():
 
 
     # =========================
-    # AVANCE DE NIVEL / CERTIFICADO
+    # AVANCE / CERTIFICADO
     # =========================
     if "score" in st.session_state:
 
@@ -300,14 +253,8 @@ def curso_page():
                             mime="application/pdf"
                         )
 
-        else:
-            st.error("❌ Necesitas mínimo 80%")
-
 
 # =========================
-# FLUJO PRINCIPAL
+# EJECUCIÓN
 # =========================
-if st.session_state["user"] is None:
-    auth_page()
-else:
-    curso_page()
+curso_page()
