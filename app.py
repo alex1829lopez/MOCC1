@@ -1,4 +1,5 @@
 import streamlit as st
+import base64
 
 from auth import register_user, login_user
 from quiz_bank import QUIZ_BANK
@@ -6,7 +7,7 @@ from certificate import generar_certificado
 
 
 # =========================
-# CONFIG (MÓVIL OPTIMIZADO)
+# CONFIG
 # =========================
 st.set_page_config(
     page_title="SkillForge Academy",
@@ -14,37 +15,74 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+
 # =========================
-# CSS RESPONSIVO MÓVIL
+# FONDO + ESTILO CRISTAL LIMPIO
 # =========================
-st.markdown("""
-<style>
+def set_bg(image_file):
+    with open(image_file, "rb") as f:
+        encoded = base64.b64encode(f.read()).decode()
 
-.block-container {
-    padding: 1rem;
-    max-width: 900px;
-}
+    st.markdown(f"""
+    <style>
 
-/* Botones grandes tipo app */
-button {
-    width: 100%;
-    border-radius: 10px;
-    font-size: 16px;
-    padding: 0.6rem;
-}
+    /* FONDO PRINCIPAL */
+    .stApp {{
+        background-image: url("data:image/jpg;base64,{encoded}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }}
 
-/* Texto más legible */
-p, label {
-    font-size: 16px;
-}
+    /* 🧊 CRISTAL LIMPIO (SIN BLUR) */
+    .block-container {{
+        padding: 2rem;
+        max-width: 900px;
 
-/* Radios más espaciados */
-.stRadio > div {
-    gap: 10px;
-}
+        background: rgba(255, 255, 255, 0.10); /* transparente */
+        border-radius: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.40);
 
-</style>
-""", unsafe_allow_html=True)
+        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.30);
+    }}
+
+    /* TEXTO LEGIBLE */
+    p, label, h1, h2, h3, div {{
+        color: white !important;
+        text-shadow: 0px 2px 8px rgba(0,0,0,0.75);
+    }}
+
+    /* BOTONES */
+    button {{
+        width: 100%;
+        border-radius: 14px;
+        font-size: 16px;
+        padding: 0.75rem;
+
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: white;
+
+        transition: 0.25s ease-in-out;
+    }}
+
+    button:hover {{
+        background: rgba(255, 255, 255, 0.22);
+        transform: scale(1.02);
+    }}
+
+    /* RADIO */
+    .stRadio > div {{
+        gap: 12px;
+    }}
+
+    </style>
+    """, unsafe_allow_html=True)
+
+
+# ACTIVAR FONDO
+set_bg("fondo.jpg")
 
 
 st.title("🎓 SkillForge Academy")
@@ -90,7 +128,7 @@ def auth_page():
     with tab2:
         name = st.text_input("Nombre", key="reg_name")
         email2 = st.text_input("Correo", key="reg_email")
-        password2 = st.text_input("Contraseña", type="password", key="reg_pass")
+        password2 = st.text_input("Contraseña", key="reg_pass")
 
         if st.button("Registrarme", use_container_width=True):
             ok, msg = register_user(name, email2, password2)
@@ -113,9 +151,6 @@ def curso_page():
     st.markdown("---")
 
 
-    # =========================
-    # VIDEOS
-    # =========================
     if nivel == 1:
         st.subheader("📺 Módulo 1")
         st.video("limon.mp4")
@@ -133,33 +168,22 @@ def curso_page():
         return
 
 
-    # =========================
-    # VIDEO COMPLETADO
-    # =========================
     if not st.session_state["video_completado"]:
         if st.button("✔ Marcar video como visto", use_container_width=True):
             st.session_state["video_completado"] = True
             st.success("Video completado")
 
-
     st.markdown("---")
 
 
-    # =========================
-    # EXAMEN BLOQUEADO
-    # =========================
     if not st.session_state["video_completado"]:
         st.warning("⚠️ Debes ver el video antes del examen")
 
     else:
-
         if st.button("📥 Iniciar examen", use_container_width=True):
             st.session_state["quiz"] = QUIZ_BANK[nivel]
 
 
-    # =========================
-    # EXAMEN
-    # =========================
     if "quiz" in st.session_state:
 
         respuestas = []
@@ -183,46 +207,33 @@ def curso_page():
                     correctas += 1
 
             score = (correctas / len(st.session_state["quiz"])) * 100
-
             st.session_state["score"] = score
 
             st.success(f"Resultado: {score:.0f}%")
 
 
-    # =========================
-    # AVANCE DE MÓDULOS
-    # =========================
     if "score" in st.session_state:
 
         if st.session_state["score"] >= 80:
 
-            # MÓDULO 1 → 2
             if st.session_state["nivel"] == 1:
 
                 if st.button("➡️ Ir al Módulo 2", use_container_width=True):
-
                     st.session_state["nivel"] = 2
                     st.session_state["video_completado"] = False
-
-                    del st.session_state["quiz"]
-                    del st.session_state["score"]
-
+                    st.session_state.pop("quiz", None)
+                    st.session_state.pop("score", None)
                     st.rerun()
 
-            # MÓDULO 2 → 3
             elif st.session_state["nivel"] == 2:
 
                 if st.button("➡️ Ir al Módulo 3", use_container_width=True):
-
                     st.session_state["nivel"] = 3
                     st.session_state["video_completado"] = False
-
-                    del st.session_state["quiz"]
-                    del st.session_state["score"]
-
+                    st.session_state.pop("quiz", None)
+                    st.session_state.pop("score", None)
                     st.rerun()
 
-            # MÓDULO 3 → CERTIFICADO
             else:
 
                 if st.button("🎓 Finalizar curso", use_container_width=True):
