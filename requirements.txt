@@ -5,4 +5,4 @@ qrcode[pil]
 pillow
 bcrypt
 sqlalchemy
-bcrypt
+werkzeug
