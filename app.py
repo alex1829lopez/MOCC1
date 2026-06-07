@@ -1,6 +1,9 @@
+from database import engine, Base
+from models import User
+
+Base.metadata.create_all(bind=engine)
 from database import init_db
 init_db()
-
 import streamlit as st
 import base64
 
