@@ -4,3 +4,5 @@ fpdf2
 qrcode[pil]
 pillow
 bcrypt
+sqlalchemy
+bcrypt
