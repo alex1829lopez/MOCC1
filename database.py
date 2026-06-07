@@ -15,8 +15,4 @@ Base = declarative_base()
 
 
 def init_db():
-    from models import User  # 👈 IMPORT AQUÍ (NO arriba)
     Base.metadata.create_all(bind=engine)
-
-
-init_db()
